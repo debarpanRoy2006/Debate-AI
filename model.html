@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debate AI</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .list-group-item {
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">DebateZone</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="main.html">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="model.html">AI Debater </a>
+                    </li>
+                   
+                    <li class="nav-item">
+                        <a class="btn btn-outline-light" href="index.html">Login</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <h1 class ="bg-primary text-white text-center py-5">Debate AI</h1>
+
+        <div class="mb-3">
+            <label for="topic" class="form-label">Debate Topic:</label>
+            <input type="text" class="form-control" id="topic" placeholder="Enter topic">
+            <button class="btn btn-primary mt-2" onclick="startDebate()">Start Debate</button>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <h2>AI Arguments:</h2>
+                <ul class="list-group" id="ai-argument-list"></ul>
+            </div>
+
+            <div class="col-md-6">
+                <h2>Your Arguments:</h2>
+                <textarea class="form-control mb-2" id="user-argument" placeholder="Enter your arguments"></textarea>
+                <button class="btn btn-primary" id="submit-user-argument">Submit</button>
+                <ul class="list-group" id="user-argument-list"></ul>
+            </div>
+        </div>
+        <div id="error-message" class="alert alert-danger mt-2" style="display:none;"></div>
+    </div>
+
+    <script>
+        async function startDebate() {  // Use async/await
+            const topic = document.getElementById('topic').value;
+            const aiArgumentList = document.getElementById('ai-argument-list');
+            const errorMessage = document.getElementById('error-message');
+
+            try {
+                const response = await fetch('http://127.0.0.1:5000/debate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ topic: topic })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json(); // Get error details from the server if available
+                    throw new Error(errorData.error || `HTTP error! status: ${response.status}`); // Use more specific error if available
+                }
+
+                const data = await response.json();
+
+                if (data.error) {
+                    errorMessage.textContent = data.error;
+                    errorMessage.style.display = "block";
+                } else {
+                    aiArgumentList.innerHTML = '';
+                    data.arguments.forEach(arg => {
+                        const li = document.createElement('li');
+                        li.classList.add("list-group-item");
+                        li.textContent = arg;
+                        aiArgumentList.appendChild(li);
+                    });
+                    errorMessage.style.display = "none";
+                }
+
+            } catch (error) {
+                console.error("Error:", error);
+                errorMessage.textContent = error.message || "Error connecting to the server."; // More robust error message
+                errorMessage.style.display = "block";
+            }
+        }
+
+        // ... (rest of your JavaScript for user arguments, etc. - no changes needed)
+        document.getElementById('submit-user-argument').addEventListener('click', () => {
+            const userArgument = document.getElementById('user-argument').value;
+            if (userArgument) {
+                const li = document.createElement('li');
+                li.classList.add("list-group-item"); //Add Bootstrap class
+                li.textContent = userArgument;
+                document.getElementById('user-argument-list').appendChild(li);
+                document.getElementById('user-argument').value = ''; // Clear input field
+            }
+        });
+
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
